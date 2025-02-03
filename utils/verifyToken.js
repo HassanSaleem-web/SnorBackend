@@ -2,7 +2,7 @@ const admin = require("../firebase");
 
 const verifyToken = async (idToken) => {
 
-    console.log("id token bro", idToken);
+    
   try {
     const decodedToken = await admin.auth().verifyIdToken(idToken);
     return decodedToken;

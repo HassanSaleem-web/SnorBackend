@@ -14,7 +14,7 @@ const authenticateUser = async (req, res, next) => {
   try {
     const decodedToken = await verifyToken(idToken); // Use shared verifyToken function
     req.user = decodedToken; // Attach decoded token to request
-    console.log("Decoded User:", req.user);
+    
 
     next(); // Proceed to the next middleware or route handler
   } catch (error) {
