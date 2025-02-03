@@ -5,7 +5,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 
 const authRoutes = require("./routes/authRoutes");
-//const userRoutes = require("./routes/userRoutes"); // Import user routes
+const projectRoutes = require("./routes/projectRoutes"); // Import project routes
 
 dotenv.config();
 
@@ -23,7 +23,7 @@ mongoose
 
 // Routes
 app.use("/api/auth", authRoutes);
-
+app.use("/api/project", projectRoutes); // Add project routes
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
