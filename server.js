@@ -13,7 +13,7 @@ const app = express();
 
 // Middleware
 app.use(bodyParser.json());
-app.use(cors({ origin: "http://localhost:3000" })); // Allow frontend requests
+app.use(cors({ origin: "http://localhost:5000" })); // Allow frontend requests
 
 // MongoDB connection
 mongoose
