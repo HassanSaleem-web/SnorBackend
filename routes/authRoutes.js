@@ -11,7 +11,7 @@ const authMiddleware = require("../middlewares/authMiddleware"); // Middleware t
 // Google Sign-In Route
 router.post("/google-signin", googleSignIn);
 router.get("/me", authMiddleware, async (req, res) => {
-    console.log("HEREEEEEE");
+    
     
     try {
         console.log(req.user);

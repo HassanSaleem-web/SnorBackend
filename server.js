@@ -5,7 +5,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 
 const authRoutes = require("./routes/authRoutes");
-const projectRoutes = require("./routes/projectRoutes"); // Import project routes
+const projectRoutes = require("./routes/projectRoutes");
 
 dotenv.config();
 
@@ -13,17 +13,20 @@ const app = express();
 
 // Middleware
 app.use(bodyParser.json());
-app.use(cors({ origin: "https://snorapp.onrender.com" })); // Allow requests from frontend
+app.use(cors({ origin: "http://localhost:3000" })); // Allow frontend requests
 
 // MongoDB connection
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((err) => console.error("❌ MongoDB Connection Error:", err));
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/project", projectRoutes); // Add project routes
+app.use("/api/project", projectRoutes); // Updated Project Routes
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
@@ -32,5 +35,5 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
