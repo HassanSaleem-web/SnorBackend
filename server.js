@@ -13,7 +13,7 @@ const app = express();
 
 // Middleware
 app.use(bodyParser.json());
-app.use(cors({ origin: "https://snorbackend.onrend.com" })); // Allow frontend requests
+app.use(cors({ origin: "https://snorbackend.onrender.com" })); // Allow frontend requests
 
 // MongoDB connection
 mongoose
