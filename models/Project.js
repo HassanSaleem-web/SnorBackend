@@ -8,7 +8,7 @@ const PolygonSchema = new mongoose.Schema({
       lng: { type: Number, required: true },
     }
   ],
-  addedBy: { type: String, required: true },
+  addedBy: { type: String},
   area: { type: Number, required: true, default: 0 } // New field for individual polygon area
 });
 
@@ -20,7 +20,7 @@ const PolylineSchema = new mongoose.Schema({
       lng: { type: Number, required: true },
     }
   ],
-  addedBy: { type: String, required: true },
+  addedBy: { type: String },
   length: { type: Number, required: true, default: 0 } // New field for individual polyline length
 });
 

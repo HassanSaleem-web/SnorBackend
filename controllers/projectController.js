@@ -67,6 +67,77 @@ const saveProject = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+const updateProject = async (req, res) => {
+  try {
+    console.log("📌 Incoming Update Request:", req.body); // 🛠 Debugging log
+
+    const { _id, projectName, description, status, address, polygons, polylines } = req.body;
+
+    if (!_id) {
+      console.error("❌ Error: Project ID is missing in request.");
+      return res.status(400).json({ message: "Project ID is required." });
+    }
+
+    const project = await Project.findById(_id);
+
+    if (!project) {
+      console.error("❌ Error: No project found with ID:", _id);
+      return res.status(404).json({ message: "Project not found." });
+    }
+
+    console.log("🔍 Existing Project Found:", project);
+
+    // ✅ Dynamically import spherical-geometry-js
+    const { computeArea, computeLength, LatLng } = await import("spherical-geometry-js");
+
+    // ✅ Helper functions for calculations
+    const calculatePolygonArea = (coordinates) => {
+      return computeArea(coordinates.map(({ lat, lng }) => new LatLng(lat, lng)));
+    };
+
+    const calculatePolylineLength = (coordinates) => {
+      return computeLength(coordinates.map(({ lat, lng }) => new LatLng(lat, lng)));
+    };
+
+    // ✅ Calculate areas and lengths for the updated shapes
+    const updatedPolygons = polygons.map((polygon) => {
+      const area = calculatePolygonArea(polygon.coordinates);
+      return { ...polygon, area };
+    });
+
+    const updatedPolylines = polylines.map((polyline) => {
+      const length = calculatePolylineLength(polyline.coordinates);
+      return { ...polyline, length };
+    });
+
+    const totalArea = updatedPolygons.reduce((sum, p) => sum + p.area, 0);
+    const totalLength = updatedPolylines.reduce((sum, l) => sum + l.length, 0);
+
+    console.log("🟠 OLD Total Area:", project.totalArea, "➡️ NEW Total Area:", totalArea);
+    console.log("🔵 OLD Total Length:", project.totalLength, "➡️ NEW Total Length:", totalLength);
+
+    // ✅ Update project fields
+    project.projectName = projectName;
+    project.description = description;
+    project.status = status;
+    project.address = address;
+    project.polygons = updatedPolygons;
+    project.polylines = updatedPolylines;
+    project.totalArea = totalArea;
+    project.totalLength = totalLength;
+
+    await project.save();
+    
+    console.log("✅ Project Updated Successfully");
+    return res.status(200).json({ message: "Project updated successfully", project });
+
+  } catch (error) {
+    console.error("❌ Error updating project:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 
 
 
@@ -268,5 +339,6 @@ module.exports = {
   getAllOtherProjects,
   getAccessRequests,
   handleAccessRequest,
-  getLinkedProjects
+  getLinkedProjects,
+  updateProject
 };

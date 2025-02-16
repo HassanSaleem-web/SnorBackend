@@ -6,6 +6,8 @@ const cors = require("cors");
 
 const authRoutes = require("./routes/authRoutes");
 const projectRoutes = require("./routes/projectRoutes");
+const userRoutes = require("./routes/userRoutes");
+const proposalRoutes = require("./routes/proposalRoutes");
 
 dotenv.config();
 
@@ -27,7 +29,8 @@ mongoose
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/project", projectRoutes); // Updated Project Routes
-
+app.use("/api/user", userRoutes); // ✅ Add this line
+app.use("/api/proposal", proposalRoutes);
 // Error Handling Middleware
 app.use((err, req, res, next) => {
   console.error("Unhandled Error:", err.message);
@@ -37,3 +40,4 @@ app.use((err, req, res, next) => {
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+

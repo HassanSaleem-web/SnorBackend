@@ -8,7 +8,8 @@ const {
   requestAccess,
   getAccessRequests,
   handleAccessRequest,
-  getLinkedProjects, // ✅ Import the new function
+  getLinkedProjects,
+  updateProject // ✅ Import the new function
 } = require("../controllers/projectController");
 const authMiddleware = require("../middlewares/authMiddleware");
 
@@ -40,6 +41,8 @@ router.post("/handle-access-request", authMiddleware, handleAccessRequest);
 // =====================================
 // 📌 NEW ROUTES FOR LINKED PROJECTS
 // =====================================
+// Route to update an existing project (Admin & Linked Users)
+router.put("/update", authMiddleware, updateProject);
 
 
 
