@@ -20,23 +20,23 @@ router.post("/", authMiddleware, saveProject);
 router.get("/my-projects", authMiddleware, getMyProjects);
 
 // Route to get a specific project by ID
-router.get("/all-other-projects", authMiddleware, getAllOtherProjects);
+//router.get("/all-other-projects", authMiddleware, getAllOtherProjects);
 // 📌 NEW: Fetch linked projects (Must be above dynamic :id route)
-router.get("/linked-projects", authMiddleware, getLinkedProjects);
-router.get("/:id", authMiddleware, getProjectById);
+//router.get("/linked-projects", authMiddleware, getLinkedProjects);
+//router.get("/:id", authMiddleware, getProjectById);
 
 // =====================================
 // 📌 NEW ROUTES FOR ACCESS REQUESTS
 // =====================================
 
 // Request access to a project
-router.post("/request-access", authMiddleware, requestAccess);
+//router.post("/request-access", authMiddleware, requestAccess);
 
 // Get all access requests for a specific project (Admin Only)
-router.get("/:projectId/requests", authMiddleware, getAccessRequests);
+//router.get("/:projectId/requests", authMiddleware, getAccessRequests);
 
 // Handle access request (Approve/Deny)
-router.post("/handle-access-request", authMiddleware, handleAccessRequest);
+//router.post("/handle-access-request", authMiddleware, handleAccessRequest);
 
 // =====================================
 // 📌 NEW ROUTES FOR LINKED PROJECTS

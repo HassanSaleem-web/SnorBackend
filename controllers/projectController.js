@@ -1,64 +1,51 @@
-const Project = require("../models/Project");
-const AccessRequest = require("../models/AccessRequest");
-const LinkedProject = require("../models/LinkedProject"); 
+
+/*const AccessRequest = require("../models/AccessRequest");
+const LinkedProject = require("../models/LinkedProject");*/ 
 
 // Save or update a project
+const Project = require("../models/Project");
+
 const saveProject = async (req, res) => {
   try {
-    const { projectName, description, status, address, polygons, polylines } = req.body;
-    const admin = req.user.email;
+    const { projectName, description, status, address, shapes } = req.body;
+    const admin = req.user.email; // Get the logged-in user’s email
 
-    // Dynamically import spherical-geometry-js
-    const { computeArea, computeLength, LatLng } = await import("spherical-geometry-js");
+    // Ensure shapes array exists and is valid
+    if (!shapes || !Array.isArray(shapes) || shapes.length === 0) {
+      return res.status(400).json({ message: "At least one shape is required." });
+    }
 
-    // Helper functions for calculations
-    const calculatePolygonArea = (coordinates) => {
-      return computeArea(coordinates.map(({ lat, lng }) => new LatLng(lat, lng)));
-    };
+    // Ensure all shapes have required fields
+    const validatedShapes = shapes.map((shape) => ({
+      coordinates: shape.coordinates || [],
+      addresses: shape.addresses || [],
+      shapeType: shape.shapeType, 
+      area: shape.area || null,
+      length: shape.length || null,
+    }));
 
-    const calculatePolylineLength = (coordinates) => {
-      return computeLength(coordinates.map(({ lat, lng }) => new LatLng(lat, lng)));
-    };
-
-    // Calculate areas and lengths
-    const updatedPolygons = polygons.map((polygon) => {
-      const area = calculatePolygonArea(polygon.coordinates);
-      return { ...polygon, area };
-    });
-
-    const updatedPolylines = polylines.map((polyline) => {
-      const length = calculatePolylineLength(polyline.coordinates);
-      return { ...polyline, length };
-    });
-
-    const totalArea = updatedPolygons.reduce((sum, p) => sum + p.area, 0);
-    const totalLength = updatedPolylines.reduce((sum, l) => sum + l.length, 0);
-
-    // Save or update the project
+    // Check if the project already exists for this admin
     let project = await Project.findOne({ projectName, admin });
 
     if (project) {
+      // ✅ If project exists, update it
       project.description = description;
       project.status = status;
       project.address = address;
-      project.polygons = updatedPolygons;
-      project.polylines = updatedPolylines;
-      project.totalArea = totalArea;
-      project.totalLength = totalLength;
+      project.shapes = validatedShapes; // Update shapes list
       await project.save();
       return res.status(200).json({ message: "Project updated successfully", project });
     } else {
+      // ✅ If project does not exist, create a new one
       project = new Project({
         projectName,
         description,
         status,
         address,
         admin,
-        polygons: updatedPolygons,
-        polylines: updatedPolylines,
-        totalArea,
-        totalLength,
+        shapes: validatedShapes,
       });
+
       await project.save();
       return res.status(201).json({ message: "Project created successfully", project });
     }
@@ -67,17 +54,33 @@ const saveProject = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+module.exports = { saveProject };
+// Get all projects created by the logged-in user
+const getMyProjects = async (req, res) => {
+  try {
+    const adminEmail = req.user.email;
+    const projects = await Project.find({ admin: adminEmail });
+    res.status(200).json({ projects });
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 const updateProject = async (req, res) => {
   try {
-    console.log("📌 Incoming Update Request:", req.body); // 🛠 Debugging log
+    console.log("📌 Incoming Update Request:", req.body); // Debugging log
 
-    const { _id, projectName, description, status, address, polygons, polylines } = req.body;
+    const { _id, projectName, description, status, address, shapes } = req.body;
+    console.log("shapetype logger",shapes[0]);
 
     if (!_id) {
       console.error("❌ Error: Project ID is missing in request.");
       return res.status(400).json({ message: "Project ID is required." });
     }
 
+    // ✅ Find project in DB
     const project = await Project.findById(_id);
 
     if (!project) {
@@ -99,35 +102,31 @@ const updateProject = async (req, res) => {
       return computeLength(coordinates.map(({ lat, lng }) => new LatLng(lat, lng)));
     };
 
-    // ✅ Calculate areas and lengths for the updated shapes
-    const updatedPolygons = polygons.map((polygon) => {
-      const area = calculatePolygonArea(polygon.coordinates);
-      return { ...polygon, area };
+    // ✅ Process each shape correctly
+    const updatedShapes = shapes.map((shape) => {
+      let updatedShape = { ...shape };
+
+      if (shape.shapeType === "Polygon") {
+        updatedShape.area = `${calculatePolygonArea(shape.coordinates).toFixed(2)} m²`;
+        updatedShape.length = null; // Polygons don't have length
+      } else if (shape.shapeType === "Polyline") {
+        updatedShape.length = `${calculatePolylineLength(shape.coordinates).toFixed(2)} m`;
+        updatedShape.area = null; // Polylines don't have area
+      }
+
+      return updatedShape;
     });
 
-    const updatedPolylines = polylines.map((polyline) => {
-      const length = calculatePolylineLength(polyline.coordinates);
-      return { ...polyline, length };
-    });
-
-    const totalArea = updatedPolygons.reduce((sum, p) => sum + p.area, 0);
-    const totalLength = updatedPolylines.reduce((sum, l) => sum + l.length, 0);
-
-    console.log("🟠 OLD Total Area:", project.totalArea, "➡️ NEW Total Area:", totalArea);
-    console.log("🔵 OLD Total Length:", project.totalLength, "➡️ NEW Total Length:", totalLength);
+    console.log("✅ Updated Shapes:", updatedShapes);
 
     // ✅ Update project fields
     project.projectName = projectName;
     project.description = description;
     project.status = status;
-    project.address = address;
-    project.polygons = updatedPolygons;
-    project.polylines = updatedPolylines;
-    project.totalArea = totalArea;
-    project.totalLength = totalLength;
+    project.shapes = updatedShapes;
 
     await project.save();
-    
+
     console.log("✅ Project Updated Successfully");
     return res.status(200).json({ message: "Project updated successfully", project });
 
@@ -136,6 +135,8 @@ const updateProject = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+/*
 
 
 
@@ -154,17 +155,6 @@ const calculatePolylineLength = (coordinates) => {
 };
 
 
-// Get all projects created by the logged-in user
-const getMyProjects = async (req, res) => {
-  try {
-    const adminEmail = req.user.email;
-    const projects = await Project.find({ admin: adminEmail });
-    res.status(200).json({ projects });
-  } catch (error) {
-    console.error("Error fetching projects:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
 
 // Get a specific project by ID
 const getProjectById = async (req, res) => {
@@ -327,18 +317,18 @@ const getLinkedProjects = async (req, res) => {
     console.error("Error fetching linked projects:", error);
     res.status(500).json({ message: "Internal server error" });
   }
-};
+};*/
 
 
 
 module.exports = {
   saveProject,
   getMyProjects,
-  getProjectById,
+  /*getProjectById,
   requestAccess,
   getAllOtherProjects,
   getAccessRequests,
   handleAccessRequest,
-  getLinkedProjects,
+  getLinkedProjects,*/
   updateProject
 };

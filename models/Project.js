@@ -1,41 +1,33 @@
 const mongoose = require("mongoose");
 
-// Polygon Schema
-const PolygonSchema = new mongoose.Schema({
+const ShapeSchema = new mongoose.Schema({
   coordinates: [
     {
       lat: { type: Number, required: true },
       lng: { type: Number, required: true },
     }
   ],
-  addedBy: { type: String},
-  area: { type: Number, required: true, default: 0 } // New field for individual polygon area
-});
-
-// Polyline Schema
-const PolylineSchema = new mongoose.Schema({
-  coordinates: [
+  addresses: [
     {
-      lat: { type: Number, required: true },
-      lng: { type: Number, required: true },
-    }
+      lat: Number,
+      lng: Number,
+      name: String,
+    },
+  
   ],
-  addedBy: { type: String },
-  length: { type: Number, required: true, default: 0 } // New field for individual polyline length
-});
+  shapeType: {type:String, required: true},
+  area: { type: String, default: null }, // If it's a polygon, store area
+  length: { type: String, default: null }, // If it's a polyline, store length
+}, { _id: false }); // Prevents auto-generating _id for each shape
 
-// Project Schema
 const ProjectSchema = new mongoose.Schema({
-  admin: { type: String, required: true },
-  address: { type: String, required: true },
-  projectName: { type: String, required: true },
+  projectName: { type: String, required: true, trim: true },
   description: { type: String, required: true },
-  status: { type: String, default: "Active" },
-  polygons: [PolygonSchema], // Stores all polygons with coordinates and area
-  polylines: [PolylineSchema], // Stores all polylines with coordinates and length
-  totalArea: { type: Number, default: 0 }, // Sum of all polygon areas
-  totalLength: { type: Number, default: 0 } // Sum of all polyline lengths
-});
+  status: { type: String, enum: ["Active", "Completed", "Pending"], default: "Active" },
+  address: { type: String, required: true },
+  admin: { type: String, required: true }, // Stores the email of the project owner
+  shapes: [ShapeSchema], // Array of shapes (can be polygons or polylines)
+}, { timestamps: true }); // Automatically adds createdAt and updatedAt fields
 
 const Project = mongoose.model("Project", ProjectSchema);
 module.exports = Project;
