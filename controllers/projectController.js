@@ -135,6 +135,54 @@ const updateProject = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+const deleteProject = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find the project by ID and ensure the requesting user is the admin
+    const project = await Project.findById(id);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    if (project.admin !== req.user.email) {
+      return res.status(403).json({ message: "Unauthorized: You can only delete your own projects." });
+    }
+
+    // Delete the project
+    await Project.findByIdAndDelete(id);
+
+    res.status(200).json({ message: "Project deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting project:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const getAllOtherProjects = async (req, res) => {
+  console.log("Calling getAllOtherProjects...");
+  try {
+    const adminEmail = req.user.email; // Logged-in user's email
+
+    // ✅ Fetch all projects where the logged-in user is NOT the admin
+    const projects = await Project.find({ admin: { $ne: adminEmail } });
+
+    // ✅ Calculate total addresses in each project
+    const projectsWithAddressCount = projects.map((project) => ({
+      ...project._doc,
+      totalAddresses: project.shapes.reduce(
+        (count, shape) => count + (shape.addresses ? shape.addresses.length : 0),
+        0
+      ),
+    }));
+
+    res.status(200).json({ projects: projectsWithAddressCount });
+  } catch (error) {
+    console.error("Error fetching all other projects:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 
 /*
 
@@ -176,17 +224,7 @@ const getProjectById = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-const getAllOtherProjects = async (req, res) => {
-  try {
-    const adminEmail = req.user.email; // Logged-in user's email
-    const projects = await Project.find({ admin: { $ne: adminEmail } }); // Exclude user's projects
 
-    res.status(200).json({ projects });
-  } catch (error) {
-    console.error("Error fetching all other projects:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
 
 
 // =======================================
@@ -324,11 +362,13 @@ const getLinkedProjects = async (req, res) => {
 module.exports = {
   saveProject,
   getMyProjects,
+  getAllOtherProjects,
   /*getProjectById,
   requestAccess,
-  getAllOtherProjects,
+  
   getAccessRequests,
   handleAccessRequest,
   getLinkedProjects,*/
-  updateProject
+  updateProject,
+  deleteProject,
 };

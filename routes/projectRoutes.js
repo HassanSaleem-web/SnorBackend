@@ -9,7 +9,8 @@ const {
   getAccessRequests,
   handleAccessRequest,
   getLinkedProjects,
-  updateProject // ✅ Import the new function
+  updateProject, // ✅ Import the new function
+  deleteProject
 } = require("../controllers/projectController");
 const authMiddleware = require("../middlewares/authMiddleware");
 
@@ -18,9 +19,9 @@ router.post("/", authMiddleware, saveProject);
 
 // Route to get all projects created by the logged-in user
 router.get("/my-projects", authMiddleware, getMyProjects);
-
+router.delete("/:id", authMiddleware, deleteProject);
 // Route to get a specific project by ID
-//router.get("/all-other-projects", authMiddleware, getAllOtherProjects);
+router.get("/all-other-projects", authMiddleware, getAllOtherProjects);
 // 📌 NEW: Fetch linked projects (Must be above dynamic :id route)
 //router.get("/linked-projects", authMiddleware, getLinkedProjects);
 //router.get("/:id", authMiddleware, getProjectById);
